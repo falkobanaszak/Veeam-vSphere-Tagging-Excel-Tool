@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html data-lt-installed="true"><head><meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
+  <title>Virtual Machine Tagging Tool</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f1f1f1;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 6px;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+
+    .import-section {
+      margin-bottom: 20px;
+    }
+
+    .import-section label {
+      display: block;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+
+    .import-section input[type="file"] {
+      display: inline-block;
+    }
+
+    .import-section button {
+      margin-top: 10px;
+      background-color: #4CAF50;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      font-size: 14px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .tags-section {
+      margin-bottom: 20px;
+    }
+
+    .tags-section textarea {
+      width: calc(100% - 40px);
+      /* Adjusted */
+      padding: 10px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      resize: vertical;
+      box-sizing: border-box;
+      margin: 0 auto;
+    }
+
+    .tags-section button {
+      margin-top: 10px;
+      background-color: #4CAF50;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      font-size: 14px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .table-container {
+      max-height: 400px;
+      overflow: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th,
+    td {
+      padding: 8px;
+      text-align: left;
+      border-bottom: 1px solid #ddd;
+    }
+
+    th {
+      background-color: #4CAF50;
+      color: #fff;
+    }
+
+    .command-section {
+      margin-top: 20px;
+    }
+
+    .command-section button {
+      background-color: #4CAF50;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      font-size: 14px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .command-output {
+      margin-top: 20px;
+      margin-bottom: 100 px;
+      white-space: pre-wrap;
+      font-family: monospace;
+      background-color: #f9f9f9;
+      padding: 10px;
+      border-radius: 4px;
+    }
+
+    /* Added styles */
+    .logo-container {
+      display: flex;
+      align-items: center;
+      max-width: 100%;
+      height: auto;
+      padding: 10px;
+    }
+
+    .logo-container img {
+      max-width: 100%;
+      max-height: 100px;
+      /* Adjust the height as desired */
+    }
+  </style>
+  <script>
+    function generateCommands() {
+      var vmNames = document.getElementsByClassName('vmName');
+      var tags = document.getElementsByClassName('tag');
+      var commandOutput = document.getElementById('commandOutput');
+      commandOutput.innerHTML = '';
+
+      for (var i = 0; i < vmNames.length; i++) {
+        var vmName = vmNames[i].innerText;
+        var tag = tags[i].value;
+        var command = 'New-TagAssignment -Tag "' + tag + '" -Entity "' + vmName + '"';
+
+        // Combine the vmName and tag to create the PowerCLI command
+        // command += 'New-TagAssignment -Tag ' + tag + ' -Entity ' + vmName;
+
+        // Display the generated command
+        var commandElement = document.createElement('div');
+        commandElement.innerText = command;
+        commandOutput.appendChild(commandElement);
+      }
+    }
+
+    function importNames() {
+      var fileInput = document.getElementById('fileInput');
+      var file = fileInput.files[0];
+
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        var names = e.target.result.split('\n');
+
+        // Remove empty lines
+        names = names.filter(function (name) {
+          return name.trim() !== '';
+        });
+
+        // Display the imported names and create dropdowns
+        var importedNamesTable = document.getElementById('importedNames');
+        importedNamesTable.innerHTML = '';
+
+        for (var i = 0; i < names.length; i++) {
+          var vmName = names[i].trim();
+
+          // Create dropdown menu
+          var dropdown = document.createElement('select');
+          dropdown.classList.add('tag');
+          dropdown.innerHTML = generateTagOptions();
+
+          // Create table row
+          var row = document.createElement('tr');
+          var nameCell = document.createElement('td');
+          var dropdownCell = document.createElement('td');
+
+          nameCell.classList.add('vmName');
+          nameCell.innerText = vmName;
+          dropdownCell.appendChild(dropdown);
+
+          row.appendChild(nameCell);
+          row.appendChild(dropdownCell);
+
+          // Append the row to the table
+          importedNamesTable.appendChild(row);
+        }
+      };
+
+      reader.readAsText(file);
+    }
+
+    function generateTagOptions() {
+      // Retrieve tags from user input
+      var tagsInput = document.getElementById('tagsInput');
+      var tags = tagsInput.value.split('\n').filter(function (tag) {
+        return tag.trim() !== '';
+      });
+
+      // Generate dropdown options based on user input
+      var options = '';
+      for (var i = 0; i < tags.length; i++) {
+        var tag = tags[i].trim();
+        options += '<option value="' + tag + '">' + tag + '</option>';
+      }
+
+      return options;
+    }
+
+    function refresh() {
+      // Refresh the dropdown menu options
+      var dropdowns = document.getElementsByClassName('tag');
+      var tagsInput = document.getElementById('tagsInput');
+      var tags = tagsInput.value.split('\n').filter(function (tag) {
+        return tag.trim() !== '';
+      });
+
+      for (var i = 0; i < dropdowns.length; i++) {
+        dropdowns[i].innerHTML = generateTagOptions();
+      }
+    }
+  </script>
+</head>
+
+<body>
+  <div class="container">
+    <h1>Virtual Machine Tagging</h1>
+
+    <div class="import-section">
+      <label for="fileInput">Import VM Names:</label>
+      <input type="file" id="fileInput" accept=".txt, .file, .vms">
+      <button onclick="importNames()">Import VM Names</button>
+    </div>
+
+    <div class="tags-section">
+      <label for="tagsInput">Add Tags:</label>
+      <textarea id="tagsInput" rows="5" placeholder="Enter tags, one per line or if you process a single list just add one tag"></textarea>
+      <button onclick="refresh()">Load vSphere Tags</button>
+    </div>
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Virtual Machine Name</th>
+            <th>vSphere Tag</th>
+          </tr>
+        </thead>
+        <tbody id="importedNames">
+          <!-- Imported VM names and corresponding elements will be added here -->
+        </tbody>
+      </table>
+    </div>
+
+    <div class="command-section">
+      <button onclick="generateCommands()">Generate Commands</button>
+      <div id="commandOutput" class="command-output"></div>
+    </div>
+    <footer>
+      <div class="logo">
+      </div>
+      <div class="copyright">
+        <a href="https://virtualhome.blog/" target="_blank">Made with AI LOVE by ChatGPT and Falko Banaszak
+          because I'm not able to
+          code</a>
+      </div>
+    </footer>
+  </div>
+
+
+</body></html>
